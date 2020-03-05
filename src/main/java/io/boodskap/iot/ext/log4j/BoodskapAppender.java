@@ -3,12 +3,13 @@ package io.boodskap.iot.ext.log4j;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadFactory;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.PatternLayout;
+import org.apache.log4j.spi.LocationInfo;
 import org.apache.log4j.spi.LoggingEvent;
 import org.json.JSONObject;
 
@@ -41,11 +42,20 @@ public class BoodskapAppender extends AppenderSkeleton implements Runnable{
      */
     protected int queueSize = 10000;
     
+    protected boolean sync = false;
+    
     protected String binRule = "log4j";
     protected String binPatternRule = "log4j-pattern";
     
     private LinkedBlockingQueue<String> outQ;
-    private final ExecutorService exec = Executors.newSingleThreadExecutor();
+    private final ExecutorService exec = Executors.newSingleThreadExecutor(new ThreadFactory() {
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread runner = new Thread(r);
+			runner.setDaemon(true);
+			return runner;
+		}
+	});
 
     public BoodskapAppender() {
     }
@@ -72,69 +82,6 @@ public class BoodskapAppender extends AppenderSkeleton implements Runnable{
 	@Override
 	public boolean requiresLayout() {
 		return true;
-	}
-
-	@Override
-	protected void append(LoggingEvent event) {
-		try {
-			
-			JSONObject json = new JSONObject();
-			JSONObject log = new JSONObject();
-			json.put("appid", appId);
-			
-			log.put("created_time", event.getTimeStamp());
-			//log.put("log_data", getLayout().format(event));
-			log.put("log_data", String.valueOf(event.getMessage()));
-			log.put("event", event.getLevel().toString());
-			log.put("thread", event.getThreadName());
-			
-			event.getLocationInformation();
-			
-			if(event.locationInformationExists()) {
-				log.put("clazz", event.getLocationInformation().getClassName());
-				log.put("file", event.getLocationInformation().getFileName());
-				log.put("line", event.getLocationInformation().getLineNumber());
-				log.put("method", event.getLocationInformation().getMethodName());
-			}
-			
-			if(null != event.getThrowableInformation()) {
-				Throwable e = event.getThrowableInformation().getThrowable();
-				if(null != e) {
-					log.put("exception", ExceptionUtils.getStackTrace(e));
-				}
-			}
-			
-			json.put("log", log);
-			
-			outQ.offer(json.toString(), 10, TimeUnit.SECONDS);
-			
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override
-	public void run() {
-		
-		try {
-			
-			JSONObject json = new JSONObject();
-			json.put("appid", appId);
-			json.put("pattern", ((PatternLayout)getLayout()).getConversionPattern());
-			
-			send(json.toString(), binPatternRule);
-			
-			while(!Thread.currentThread().isInterrupted()) {
-				String out = outQ.take();
-				send(out, binRule);
-			}
-			
-		}catch(InterruptedException iex) {
-			
-		}catch(Exception ex) {
-			ex.printStackTrace();
-		}
-		
 	}
 
 	public String getApiBasePath() {
@@ -206,6 +153,83 @@ public class BoodskapAppender extends AppenderSkeleton implements Runnable{
 		this.binPatternRule = binPatternRule;
 	}
 
+
+	public boolean isSync() {
+		return sync;
+	}
+
+
+	public void setSync(boolean sync) {
+		this.sync = sync;
+	}
+
+
+	@Override
+	protected void append(LoggingEvent event) {
+		try {
+			
+			JSONObject log = new JSONObject();
+			
+			log.put("appid", appId);
+			log.put("created_time", event.getTimeStamp());
+			log.put("log_data", event.getRenderedMessage());
+			log.put("severity", event.getLevel().toString());
+			log.put("thread", event.getThreadName());
+			
+			if(null != event.getLocationInformation()) {
+				LocationInfo src = event.getLocationInformation();
+				log.put("clazz", src.getClassName());
+				log.put("file", src.getFileName());
+				log.put("line", src.getLineNumber());
+				log.put("method", src.getMethodName());
+			}
+			
+			if(null != event.getThrowableInformation()) {
+				log.put("exception", ExceptionUtils.getStackTrace(event.getThrowableInformation().getThrowable()));
+			}
+			
+			if(sync) {
+				send(log.toString(), binRule);
+			}else {
+				outQ.offer(log.toString());
+			}
+
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void run() {
+		
+		try {
+
+			
+			sendPattern();
+			
+			while(!Thread.currentThread().isInterrupted()) {
+				String out = outQ.take();
+				send(out, binRule);
+			}
+			
+		}catch(InterruptedException iex) {
+			
+		}catch(Exception ex) {
+			ex.printStackTrace();
+		}
+		
+	}
+
+	private void sendPattern() {
+		
+		JSONObject json = new JSONObject();
+		json.put("appid", appId);
+		json.put("pattern", ((PatternLayout) getLayout()).getConversionPattern());
+		
+		send(json.toString(), binPatternRule);
+				
+	}
 
 	private void send(String out, String rule) {
 		try {
