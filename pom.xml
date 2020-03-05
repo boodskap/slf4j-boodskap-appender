@@ -19,6 +19,29 @@
 		<maven.compiler.debug>true</maven.compiler.debug>
 	</properties>
 
+	<distributionManagement>
+		<repository>
+			<id>sonatype</id>
+			<name>Boodskap Maven Packages</name>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+		</repository>
+		<snapshotRepository>
+			<id>sonatype</id>
+			<name>Boodskap Maven Packages</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<organization>
+		<name>Boodskap</name>
+		<url>https://boodskap.io</url>
+	</organization>
+
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>http://github.com/boodskap/slf4j-boodskap-appender/issues</url>
+	</issueManagement>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
