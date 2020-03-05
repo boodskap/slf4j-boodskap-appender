@@ -9,6 +9,38 @@
 	<name>slf4j-boodskap-appender</name>
 	<url>https://github.com/boodskap/slf4j-boodskap-appender</url>
 
+	<description>
+        SLF4J - LOG4J2 Appender to upload log events to Boodskap IoT Platform
+    </description>
+
+	<licenses>
+		<license>
+			<name>The MIT License</name>
+			<url>https://raw.githubusercontent.com/boodskap/slf4j-boodskap-appender/master/LICENSE</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>jvincent</id>
+			<name>Jegan Vincent</name>
+			<email>jvincent@boodskap.io</email>
+			<organization>Boodskap</organization>
+			<organizationUrl>https://boodskap.io</organizationUrl>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git@github.com:boodskap/slf4j-boodskap-appender.git</connection>
+		<developerConnection>scm:git:ssh://github.com/boodskap/slf4j-boodskap-appender.git</developerConnection>
+		<url>https://github.com/boodskap/slf4j-boodskap-appender/tree/master</url>
+	</scm>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
@@ -21,12 +53,12 @@
 
 	<distributionManagement>
 		<repository>
-			<id>sonatype</id>
+			<id>ossrh</id>
 			<name>Boodskap Maven Packages</name>
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
 		</repository>
 		<snapshotRepository>
-			<id>sonatype</id>
+			<id>ossrh</id>
 			<name>Boodskap Maven Packages</name>
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
@@ -66,6 +98,60 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>${maven.compiler.version}</version>
+			</plugin>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.7</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9.1</version>
+				<configuration>
+					<source>8</source>
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
