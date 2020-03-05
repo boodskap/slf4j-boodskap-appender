@@ -1,6 +1,17 @@
 # slf4j-boodskap-appender
 SLF4J / LOG4J Boodskap Platform Appender
 
+# Maven Dependency
+```xml
+    <dependencies>
+        <dependency>
+                <groupId>io.boodskap.iot.ext</groupId>
+                <artifactId>slf4j-boodskap-appender</artifactId>
+                <version>1.0.0</version>
+        </dependency>
+    </dependencies>
+```
+
 # Sample log4j.properties Configuration
 ```properties
 # Root logger option
