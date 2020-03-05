@@ -5,6 +5,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.PatternLayout;
@@ -52,6 +53,11 @@ public class BoodskapAppender extends AppenderSkeleton implements Runnable{
     
 	@Override
 	public void activateOptions() {
+		
+		if(StringUtils.isBlank(apiBasePath) || StringUtils.isBlank(domainKey) || StringUtils.isBlank(apiKey) || StringUtils.isBlank(appId)) {
+			throw new RuntimeException("Expected apiBasePath, domainKey, apiKey and appId");
+		}
+		
 		outQ = new LinkedBlockingQueue<String>(queueSize);
 		exec.submit(this);
 		super.activateOptions();
